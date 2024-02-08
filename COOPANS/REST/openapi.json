@@ -1,0 +1,369 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "ED254 Interface",
+        "description": "A REST API to subscribe to arrival sequence data",
+        "contact": {
+            "name": "Software Development",
+            "url": "https://coopans.com",
+            "email": "sysdev@coopans.com"
+        },
+        "version": "0.1"
+    },
+    "externalDocs": {
+        "description": "definition docs desc"
+    },
+    "servers": [{
+        "url": "http://localhost:8080",
+        "description": "Generated server url"
+    }],
+    "tags": [{
+        "name": "ED254",
+        "description": "COOPANS SWIM ED254 API"
+    }],
+    "paths": {
+        "/arrivalSequenceInformation/v1/subscriptions": {
+            "post": {
+                "tags": ["ED254"],
+                "summary": "The \"Subscribe\" endpoint allows clients to register to receive arrival sequence information.",
+                "operationId": "subscribeToArrivalSequence",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubscriptionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "409": {
+                        "description": "Conflict – in case of already subscribed consumer"
+                    },
+                    "503": {
+                        "description": "Service Unavailable"
+                    },
+                    "400": {
+                        "description": "Bad Request - in case of invalid URL parameter or malformed request data",
+                        "content": {
+                            "application/hal+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubscriptionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    },
+                    "401": {
+                        "description": "Unauthorised – in case non-authorised client requests"
+                    },
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/hal+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubscriptionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": ["ED254"],
+                "summary": "The \"Unsubscribe\" endpoint allows clients to remove their current active subscription",
+                "description": "Method used to unsubscribe to Arrival sequence information",
+                "operationId": "unsubscribeToArrivalSequence",
+                "parameters": [{
+                    "name": "subscriptionReference",
+                    "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }],
+                "responses": {
+                    "503": {
+                        "description": "Service Unavailable"
+                    },
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/hal+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnsubscriptionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - in case of invalid URL parameter or malformed request data",
+                        "content": {
+                            "application/hal+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnsubscriptionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    },
+                    "401": {
+                        "description": "Unauthorised – in case non-authorised client requests"
+                    },
+                    "404": {
+                        "description": "Not Found – in case subscription reference cannot be resolved.",
+                        "content": {
+                            "application/hal+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnsubscriptionResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/arrivalSequenceInformation/v1/problems": {
+            "post": {
+                "tags": ["ED254"],
+                "summary": "The \"Communicate Problems\" endpoint enables clients to report issues in the arrival sequence they have received.",
+                "operationId": "communicateProblems",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DataValidationResult"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "500": {
+                        "description": "Internal Server Error"
+                    },
+                    "503": {
+                        "description": "Service Unavailable"
+                    },
+                    "401": {
+                        "description": "Unauthorised – in case non-authorised client requests"
+                    },
+                    "400": {
+                        "description": "Bad Request - in case of invalid URL parameter or malformed request data"
+                    },
+                    "202": {
+                        "description": "Accepted"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "DestinationAerodrome": {
+                "required": ["aerodromeDesignator"],
+                "type": "object",
+                "properties": {
+                    "aerodromeDesignator": {
+                        "pattern": "^[A-Z]{4}$|^[A-Z]{1,3}[*]{1}$",
+                        "type": "string"
+                    },
+                    "assignedArrivalRunway": {
+                        "type": "array",
+                        "description": "with pattern: ^(0[1-9]|[12][0-9]|3[0-6])([LRC]{0,1}|[\\*]{1})$|^[0123][\\*]{1}$",
+                        "items": {
+                            "type": "string",
+                            "description": "with pattern: ^(0[1-9]|[12][0-9]|3[0-6])([LRC]{0,1}|[\\*]{1})$|^[0123][\\*]{1}$"
+                        }
+                    }
+                }
+            },
+            "FlightId": {
+                "type": "object",
+                "properties": {
+                    "arcid": {
+                        "pattern": "^[A-Z0-9]{2,7}$|^[A-Z0-9]{1,6}[*]{1}$",
+                        "type": "string"
+                    },
+                    "ades": {
+                        "pattern": "^[A-Z]{4}$|^[A-Z]{1,3}[*]{1}$",
+                        "type": "string"
+                    },
+                    "adep": {
+                        "pattern": "^[A-Z]{4}$|^[A-Z]{1,3}[*]{1}$",
+                        "type": "string"
+                    },
+                    "eobt": {
+                        "type": "string",
+                        "description": "The UTC time in the format 'YYYY-MM-DDTHH:MM:SSZ'",
+                        "format": "date-time"
+                    },
+                    "eobd": {
+                        "type": "string",
+                        "description": "The UTC time in the format 'YYYY-MM-DDTHH:MM:SSZ'",
+                        "format": "date-time"
+                    },
+                    "gufi": {
+                        "pattern": "^[A-Z][A-Z0-9][0-9]+",
+                        "type": "string",
+                        "description": "The Globally Unique Flight Identifier provides a globally unique reference to\nthe flight, allowing all eligible members of the ATM Community to\nunambiguously refer to information pertaining to a flight (ICAO Doc 9965)."
+                    },
+                    "ifplId": {
+                        "pattern": "^[A-Z]{2}[0-9]{8}$|^[A-Z]{1,2}[*]{1}$|^[A-Z]{2}[0-9]{1,7}[*]{1}$",
+                        "type": "string"
+                    },
+                    "amanUniqueTechnicalId": {
+                        "type": "string"
+                    },
+                    "modeSCallSign": {
+                        "pattern": "^[A-Z0-9\\s]{8}",
+                        "type": "string"
+                    }
+                }
+            },
+            "SubscriptionFilter": {
+                "type": "object",
+                "properties": {
+                    "pointName": {
+                        "type": "array",
+                        "description": "with pattern: ^[A-Z0-9]{5}$|^[A-Z0-9]{1,4}[\\*]{1}$",
+                        "items": {
+                            "type": "string",
+                            "description": "with pattern: ^[A-Z0-9]{5}$|^[A-Z0-9]{1,4}[\\*]{1}$"
+                        }
+                    },
+                    "flightSelector": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FlightId"
+                        }
+                    },
+                    "destinationAerodrome": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DestinationAerodrome"
+                        }
+                    }
+                }
+            },
+            "SubscriptionRequest": {
+                "type": "object",
+                "properties": {
+                    "subscriptionFilters": {
+                        "$ref": "#/components/schemas/SubscriptionFilter"
+                    },
+                    "supplementaryData": {
+                        "$ref": "#/components/schemas/SupplementaryData"
+                    }
+                }
+            },
+            "SupplementaryData": {
+                "required": ["delay", "landingSequencePosition"],
+                "type": "object",
+                "properties": {
+                    "delay": {
+                        "type": "boolean",
+                        "description": "a boolean if field should be added to arrival data"
+                    },
+                    "landingSequencePosition": {
+                        "type": "boolean",
+                        "description": "a boolean if field should be added to arrival data"
+                    },
+                    "amanStrategy": {
+                        "type": "boolean",
+                        "description": "This field is not supported and should not be used"
+                    },
+                    "departureAerodrome": {
+                        "type": "boolean",
+                        "description": "This field is not supported and should not be used"
+                    },
+                    "proposedProcedure": {
+                        "type": "boolean",
+                        "description": "This field is not supported and should not be used"
+                    }
+                },
+                "description": "These is the supplementary field you will receive in the topsky arrival data, since\n TopSky does not support amanStrategy, proposedProcedure they are not included"
+            },
+            "ErrorDetail": {
+                "required": ["errorCode"],
+                "type": "object",
+                "properties": {
+                    "errorCode": {
+                        "type": "string",
+                        "enum": ["TIME_ZONE", "TIME_ACCURACY", "ILLEGAL_CHAR", "WRONG_ENUM_VALUE", "PATTERN_VIOLATION", "LOGIC_VIOLATION", "STRING_LENGTH", "NOT_A_BOOLEAN", "NOT_A_NUMBER", "NOT_AN_INTEGER", "NOT_POSITIVE_OR_ZERO", "SUBFIELD_MISSING", "NOT_READABLE", "WRONG_ENCODING", "DATA_CORRUPTION"]
+                    },
+                    "erroneousFieldName": {
+                        "type": "string"
+                    },
+                    "errorMessage": {
+                        "type": "string"
+                    }
+                }
+            },
+            "SubscriptionResponse": {
+                "required": ["subscriptionResult"],
+                "type": "object",
+                "properties": {
+                    "subscriptionResult": {
+                        "type": "string",
+                        "enum": ["SUBSCRIPTION_REFUSED", "SUBSCRIPTION_SUCCESSFUL"]
+                    },
+                    "errorReason": {
+                        "type": "string",
+                        "enum": ["INVALID_FILTER", "NO_SUCH_ELEMENT", "ALREADY_SUBSCRIBED", "NOT_INTERPRETABLE"]
+                    },
+                    "errorDetails": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorDetail"
+                        }
+                    },
+                    "subscriptionReference": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subscriptionEnd": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "DataValidationResult": {
+                "required": ["dataValResult"],
+                "type": "object",
+                "properties": {
+                    "dataValResult": {
+                        "type": "string",
+                        "enum": ["SEQUENCE_GAPS", "WRONG_FORMAT", "DATA_INVALID", "NON_SUBSCRIBED_DATA"]
+                    },
+                    "errorReport": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorDetail"
+                        }
+                    }
+                }
+            },
+            "UnsubscriptionResponse": {
+                "required": ["unsubscriptionResult"],
+                "type": "object",
+                "properties": {
+                    "unsubscriptionResult": {
+                        "type": "string",
+                        "enum": ["UNSUBSCRIPTION_FAILURE", "UNSUBSCRIPTION_SUCCESSFUL"]
+                    },
+                    "errorReason": {
+                        "type": "string",
+                        "enum": ["NOT_SUBSCRIBED", "WRONG_REFERENCE", "NOT_INTERPRETABLE"]
+                    }
+                }
+            }
+        }
+    }
+}

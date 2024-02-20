@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Représente l'instantiation par la DSNA du service ED-254 ArrivalSequenceInformation pour le service ExtendedArrivalSequence, partie gestion de l'abonnement
+-->
+<!--
+ HISTORIQUE DES MODIFICATIONS
+ DATE - AUTEUR - RAISONS ET MODIFICATIONS
+ 18/11/2021 - AMO ESA - v0.1 - Création à partir de ArrivalSequenceInformationPublisher.wsdl, avec ajout de l'opération de modification de l'abonnement et modification namespace en x-arr-* au lieu de arr-*
+ 09/12/2021 - AMO ESA - v0.2 - Corrections concernant l'opération de modification de l'abonnement, passage du namespace en V1.2, MAJ de l'URL
+ 23/09/2022 - CS4A BGI - v1.0 - Création d'un wsdl pour l'ops et pour le preops, modification des urls
+  -->
+<definitions xmlns:msg="urn:x-dsna:swim:ed254:x-arr-srv:1_2" xmlns:external="urn:x-dsna:swim:ed254:x-arr-sub:1_2"
+             xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.xmlsoap.org/wsdl/"
+             targetNamespace="urn:x-dsna:swim:ed254:x-arr-srv:1_2">
+    <!-- ===================== Types Definitions ====================== -->
+    <wsdl:types>
+        <xsd:schema targetNamespace="urn:x-dsna:swim:ed254:x-arr-srv:1_2" version="1.2">
+            <xsd:import namespace="urn:x-dsna:swim:ed254:x-arr-sub:1_2"
+                        schemaLocation="./ExtendedArrivalSequenceDistributionPublisher_msg_1.2.xsd"/>
+            <xsd:element name="SubscriptionRequest" type="external:SubscriptionRequestType"/>
+            <xsd:element name="SubscriptionResponse" type="external:SubscriptionResponseType"/>
+            <xsd:element name="UnsubscriptionRequest" type="external:UnsubscriptionRequestType"/>
+            <xsd:element name="UnsubscriptionResponse" type="external:UnsubscriptionResponseType"/>
+            <xsd:element name="PauseRequest" type="external:PauseRequestType"/>
+            <xsd:element name="PauseResponse" type="external:PauseResponseType"/>
+            <xsd:element name="ResumeRequest" type="external:ResumeRequestType"/>
+            <xsd:element name="ResumeResponse" type="external:ResumeResponseType"/>
+            <xsd:element name="ModificationRequest" type="external:ModificationRequestType"/>
+            <xsd:element name="ModificationResponse" type="external:ModificationResponseType"/>
+            <xsd:element name="CommunicateProblemRequest" type="external:DataValidationResultType"/>
+        </xsd:schema>
+    </wsdl:types>
+    <!-- ===================== Messages Definitions ====================== -->
+    <wsdl:message name="subscribeToArrivalSequenceInformationRequest">
+        <wsdl:part name="subscribeToArrivalSequenceInformationRequest" element="msg:SubscriptionRequest"/>
+    </wsdl:message>
+    <wsdl:message name="subscribeToArrivalSequenceInformationResponse">
+        <wsdl:part name="subscribeToArrivalSequenceInformationResponse" element="msg:SubscriptionResponse"/>
+    </wsdl:message>
+    <wsdl:message name="unsubscribeToArrivalSequenceInformationRequest">
+        <wsdl:part name="unsubscribeToArrivalSequenceInformationRequest" element="msg:UnsubscriptionRequest"/>
+    </wsdl:message>
+    <wsdl:message name="unsubscribeToArrivalSequenceInformationtResponse">
+        <wsdl:part name="unsubscribeToArrivalSequenceInformationtResponse" element="msg:UnsubscriptionResponse"/>
+    </wsdl:message>
+    <wsdl:message name="pauseArrivalSequenceSubscriptionRequest">
+        <wsdl:part name="pauseArrivalSequenceSubscriptionRequest" element="msg:PauseRequest"/>
+    </wsdl:message>
+    <wsdl:message name="pauseArrivalSequenceSubscriptionResponse">
+        <wsdl:part name="pauseArrivalSequenceSubscriptionResponse" element="msg:PauseResponse"/>
+    </wsdl:message>
+    <wsdl:message name="resumeArrivalSequenceSubscriptionRequest">
+        <wsdl:part name="resumeArrivalSequenceSubscriptionRequest" element="msg:ResumeRequest"/>
+    </wsdl:message>
+    <wsdl:message name="resumeArrivalSequenceSubscriptionResponse">
+        <wsdl:part name="resumeArrivalSequenceSubscriptionResponse" element="msg:ResumeResponse"/>
+    </wsdl:message>
+    <wsdl:message name="communicateProblemRequest">
+        <wsdl:part name="communicateProblemRequest" element="msg:CommunicateProblemRequest"/>
+    </wsdl:message>
+    <wsdl:message name="modifyArrivalSequenceSubscriptionRequest">
+        <wsdl:part name="modifyArrivalSequenceSubscriptionRequest" element="msg:ModificationRequest"/>
+    </wsdl:message>
+    <wsdl:message name="modifyArrivalSequenceSubscriptionResponse">
+        <wsdl:part name="modifyArrivalSequenceSubscriptionResponse" element="msg:ModificationResponse"/>
+    </wsdl:message>
+    <!-- ===================== PortTypes Definitions ====================== -->
+    <wsdl:portType name="ArrivalSequenceInformationPublisherPort">
+        <wsdl:operation name="subscribeToArrivalSequenceInformation">
+            <wsdl:input name="subscribeToArrivalSequenceInformationRequest"
+                        message="msg:subscribeToArrivalSequenceInformationRequest"/>
+            <wsdl:output name="subscribeToArrivalSequenceInformationResponse"
+                         message="msg:subscribeToArrivalSequenceInformationResponse"/>
+        </wsdl:operation>
+        <wsdl:operation name="unsubscribeToArrivalSequenceInformation">
+            <wsdl:input name="unsubscribeToArrivalSequenceInformationRequest"
+                        message="msg:unsubscribeToArrivalSequenceInformationRequest"/>
+            <wsdl:output name="unsubscribeToArrivalSequenceInformationtResponse"
+                         message="msg:unsubscribeToArrivalSequenceInformationtResponse"/>
+        </wsdl:operation>
+        <wsdl:operation name="modifyArrivalSequenceSubscription">
+            <wsdl:input name="modifyArrivalSequenceSubscriptionRequest"
+                        message="msg:modifyArrivalSequenceSubscriptionRequest"/>
+            <wsdl:output name="modifyArrivalSequenceSubscriptionResponse"
+                         message="msg:modifyArrivalSequenceSubscriptionResponse"/>
+        </wsdl:operation>
+        <wsdl:operation name="pauseArrivalSequenceSubscription">
+            <wsdl:input name="pauseArrivalSequenceSubscriptionRequest"
+                        message="msg:pauseArrivalSequenceSubscriptionRequest"/>
+            <wsdl:output name="pauseArrivalSequenceSubscriptionResponse"
+                         message="msg:pauseArrivalSequenceSubscriptionResponse"/>
+        </wsdl:operation>
+        <wsdl:operation name="resumeArrivalSequenceSubscription">
+            <wsdl:input name="resumeArrivalSequenceSubscriptionRequest"
+                        message="msg:resumeArrivalSequenceSubscriptionRequest"/>
+            <wsdl:output name="resumeArrivalSequenceSubscriptionResponse"
+                         message="msg:resumeArrivalSequenceSubscriptionResponse"/>
+        </wsdl:operation>
+        <wsdl:operation name="communicateProblem">
+            <wsdl:input name="communicateProblemRequest" message="msg:communicateProblemRequest"/>
+        </wsdl:operation>
+    </wsdl:portType>
+    <!-- ===================== Bindings Definitions ====================== -->
+    <wsdl:binding name="ArrivalSequenceInformationPublisherBinding" type="msg:ArrivalSequenceInformationPublisherPort">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="subscribeToArrivalSequenceInformation">
+            <soap:operation soapAction=""/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="unsubscribeToArrivalSequenceInformation">
+            <soap:operation soapAction=""/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="pauseArrivalSequenceSubscription">
+            <soap:operation soapAction=""/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="resumeArrivalSequenceSubscription">
+            <soap:operation soapAction=""/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="modifyArrivalSequenceSubscription">
+            <soap:operation soapAction=""/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="communicateProblem">
+            <soap:operation soapAction=""/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+        </wsdl:operation>
+    </wsdl:binding>
+    <!-- ===================== Service Definitions ====================== -->
+    <wsdl:service name="ArrivalSequenceInformationService">
+        <wsdl:port name="ArrivalSequenceInformationPublisher" binding="msg:ArrivalSequenceInformationPublisherBinding">
+            <soap:address location="https://eaman.swim.dsna.fr:443/xman/arrivalsequence/1.2/subscription"/>
+        </wsdl:port>
+    </wsdl:service>
+</definitions>

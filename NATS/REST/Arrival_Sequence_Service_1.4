@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:asdd="http://ArrivalSequenceDataDefinitions" xmlns:base="http://www.fixm.aero/base/1.0" xmlns:fx="http://www.fixm.aero/fx/1.0" targetNamespace="http://ArrivalSequenceDataDefinitions" elementFormDefault="qualified" version="Arrival_Sequence_Service_1.4">
+	<!-- The following changes have been made associated to AMAN Build 1.28 changes:
+	a) smoothedDelay field added
+	b) crossedXMANHorizon field added
+	c) delayCredible field added
+-->
+	<xsd:import namespace="http://www.fixm.aero/fx/1.0" schemaLocation="../fixm/1.1/fx/fx.xsd"/>
+	<xsd:import namespace="http://www.fixm.aero/base/1.0" schemaLocation="../fixm/1.1/base/base.xsd"/>
+	<xsd:element name="arrivalSequenceCollection" type="asdd:arrivalSequenceCollectionType"/>
+	<xsd:complexType name="arrivalSequenceCollectionType">
+		<xsd:sequence>
+			<xsd:element name="arrivalSequence" type="asdd:ArrivalSequence" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ArrivalSequence">
+		<xsd:sequence>
+			<xsd:element name="airport" type="asdd:AirportData" maxOccurs="unbounded"/>
+			<xsd:element name="amanState" type="asdd:StateType" minOccurs="0" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>airport independend interface status (e.g. NAS, NODE, METEO)</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="arrivalSequenceFilter" type="xsd:anyType" minOccurs="0"/>
+		</xsd:sequence>
+		<xsd:attribute name="messageTime" type="base:TimeType" use="required"/>
+	</xsd:complexType>
+	<xsd:complexType name="AirportData">
+		<xsd:sequence>
+			<xsd:element name="runwaySequence" type="asdd:RunwaySequence" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="airportStrategy" type="asdd:AirportStrategyType" minOccurs="0"/>
+			<xsd:element name="airportState" type="asdd:StateType" minOccurs="0" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>Airport specific interface state indicators.
+                        (e.g. ETFMS:LL, ETFMS:KK)</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="nonSequenceList" type="asdd:NonSequenceListType" minOccurs="0"/>
+		</xsd:sequence>
+		<xsd:attribute name="airport" type="fx:AerodromeCodeType" use="required"/>
+		<xsd:attribute name="landingRate" type="xsd:double"/>
+		<xsd:attribute name="eatsInForce" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="timeHorizon" type="base:DurationType"/>
+		<xsd:attribute name="delayCredible" type="xsd:boolean" default="true"/>
+	</xsd:complexType>
+	<xsd:complexType name="RunwaySequence">
+		<xsd:sequence>
+			<xsd:element name="sequencedFlight" type="asdd:SequencedFlightType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="placeholder" type="asdd:PlaceholderType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="diverted" type="asdd:DivertedType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="runway" type="xsd:string"/>
+		<!--<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+			<xsd:group ref="asdd:SequenceEntryGroup"/>
+		</xsd:sequence>-->
+	</xsd:complexType>
+	<xsd:complexType name="NonSequenceListType">
+		<xsd:sequence>
+			<xsd:element name="nonSequencedFlight" type="asdd:NonSequencedFlightType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!--<xsd:group name="SequenceEntryGroup">
+		<xsd:choice>
+			<xsd:element name="sequencedFlight" type="asdd:SequencedFlightType"/>
+			<xsd:element name="placeholder" type="asdd:PlaceholderType"/>
+			<xsd:element name="diverted" type="asdd:DivertedType"/>
+		</xsd:choice>
+	</xsd:group>-->
+	<xsd:complexType name="PlaceholderType">
+		<xsd:sequence>
+			<xsd:element name="sequencingPoint" type="asdd:SequencingPoint" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="wakeCategory" type="asdd:ExtendedWakeCategory" default="UNKNOWN">
+			<xsd:annotation>
+				<xsd:documentation>
+                    Possible values: LIGHT, SMALL, MEDIUM, UPPER_MEDIUM, HEAVY, SUPER, UNKNOWN;
+                    FIXM also defines: B757 this is not currently used by BARCO AMAN
+                </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="runwayDirection" type="xsd:string" use="required">
+			<xsd:annotation>
+				<xsd:documentation>i.e. "09L"</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="forceRNAV" type="xsd:boolean" default="false"/>
+	</xsd:complexType>
+	<xsd:complexType name="DivertedType">
+		<xsd:sequence>
+			<xsd:element name="sequencingPoint" type="asdd:SequencingPoint" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attribute name="sequenceNumber" type="asdd:SequenceNumberType"/>
+	</xsd:complexType>
+	<xsd:complexType name="AirportStrategyType">
+		<xsd:sequence>
+			<xsd:element name="runwayClosure" type="asdd:RunwayClosureType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="runwayStrategy" type="asdd:RunwayStrategyType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="runwaySpacing" type="asdd:RunwaySpacingType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="runwayDependency" type="asdd:RunwayDependencyType" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element name="runwaySpacingStrategy" type="asdd:RunwaySpacingStrategyType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<!--<xsd:sequence>
+			<xsd:group ref="asdd:StrategyGroup"/>
+		</xsd:sequence>-->
+	</xsd:complexType>
+	<xsd:complexType name="SequencedFlightType">
+		<xsd:sequence>
+			<xsd:element name="additionalInfo" type="asdd:FlightInfoType" minOccurs="0"/>
+			<xsd:element name="sequencingPoint" type="asdd:SequencingPoint" maxOccurs="unbounded"/>
+			<xsd:element name="flightState" type="asdd:StateType" minOccurs="0" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>
+                    This may be used to indicate any problems with this flight
+                    (e.g. duplicate callsign / ssr)
+                </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+		<xsd:attributeGroup ref="asdd:FlightId"/>
+		<xsd:attribute name="modeS" type="fx:AircraftAddressType"/>
+		<xsd:attribute name="aircraftType" type="fx:AircraftModelIcaoType"/>
+		<xsd:attribute name="wakeCategory" type="asdd:ExtendedWakeCategory" default="UNKNOWN">
+			<xsd:annotation>
+				<xsd:documentation>
+                    Possible values: LIGHT, SMALL, MEDIUM, UPPER_MEDIUM, HEAVY, SUPER, UNKNOWN;
+                    FIXM also defines: B757 this is not currently used by BARCO AMAN
+                </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="star" type="fx:AirwayType" use="optional"/>
+		<xsd:attribute name="ssr" type="fx:BeaconCodeType"/>
+		<xsd:attribute name="sequenceNumber" type="asdd:SequenceNumberType"/>
+		<xsd:attribute name="runwayDirection" type="xsd:string" use="required">
+			<xsd:annotation>
+				<xsd:documentation>i.e. "09L"</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="tldt" type="base:TimeType" use="required">
+			<xsd:annotation>
+				<xsd:documentation>
+                    Same as target time at runway.
+                </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:complexType>
+	<xsd:complexType name="NonSequencedFlightType">
+		<xsd:sequence>
+			<xsd:element name="additionalInfo" type="asdd:FlightInfoType" minOccurs="0"/>
+			<xsd:element name="flightState" type="asdd:StateType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+		<xsd:attributeGroup ref="asdd:FlightId"/>
+		<xsd:attribute name="modeS" type="fx:AircraftAddressType"/>
+		<xsd:attribute name="aircraftType" type="fx:AircraftModelIcaoType"/>
+		<xsd:attribute name="wakeCategory" type="asdd:ExtendedWakeCategory" default="UNKNOWN">
+			<xsd:annotation>
+				<xsd:documentation>
+                    Possible values: LIGHT, SMALL, MEDIUM, UPPER_MEDIUM, HEAVY, SUPER, UNKNOWN;
+                    FIXM also defines: B757 this is not currently used by BARCO AMAN
+                </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="star" type="fx:AirwayType" use="optional"/>
+		<xsd:attribute name="ssr" type="fx:BeaconCodeType"/>
+		<xsd:attribute name="sequenceNumber" type="asdd:SequenceNumberType"/>
+		<xsd:attribute name="desequenceReason" type="xsd:string" use="required"/>
+	</xsd:complexType>
+	<xsd:simpleType name="SequenceNumberType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]{2}[A-Z]?"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="FlightInfoType">
+		<xsd:attribute name="priority" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="positioning" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="predeparture" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="presequenced" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="minSpacingBefore" type="xsd:double" default="0.0"/>
+		<xsd:attribute name="minSpacingAfter" type="xsd:double" default="0.0"/>
+		<xsd:attribute name="frozen" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="manuallyChanged" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="stackSwap" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="forceRNAV" type="xsd:boolean" default="false"/>
+		<xsd:attribute name="crossedXMANHorizon" type="xsd:boolean" default="false"/>
+	</xsd:complexType>
+	<xsd:complexType name="SequencingTimes">
+		<xsd:attribute name="target" type="base:TimeType">
+			<xsd:annotation>
+				<xsd:documentation>time as planned by AMAN</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="estimated" type="base:TimeType">
+			<xsd:annotation>
+				<xsd:documentation>free flight time (as if nothing else was in the way)</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="monitored" type="base:TimeType">
+			<xsd:annotation>
+				<xsd:documentation>
+                Provide AMANs monitoring information;
+                if given for pointtype ARR_RUNWAY this indicates a landed flight
+            </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:complexType>
+	<xsd:complexType name="SequencingPoint">
+		<xsd:sequence>
+			<xsd:element name="point" type="base:WaypointLocationType"/>
+			<xsd:element name="timeatpoint" type="asdd:SequencingTimes" minOccurs="0"/>
+			<xsd:element name="advisory" type="asdd:AdvisoryInformationType" minOccurs="0"/>
+		</xsd:sequence>
+		<xsd:attribute name="delay" type="asdd:DelayType" use="required">
+			<xsd:annotation>
+				<xsd:documentation>
+                    neagtive values represent time to gain;
+                    positive values represent time to loose;
+                    or NIL for invalid delay
+                </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="smoothedDelay" type="asdd:DelayType" use="optional"/>
+		<xsd:attribute name="type" type="asdd:PointType">
+			<xsd:annotation>
+				<xsd:documentation>possible values: AOD_RUNWAY, IMP, COP, MP, IAF, ARR_RUNWAY</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:complexType>
+	<xsd:simpleType name="DelayType">
+		<xsd:union memberTypes="base:DurationType">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="NIL"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:union>
+	</xsd:simpleType>
+	<xsd:simpleType name="PointType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="AOD_RUNWAY"/>
+			<xsd:enumeration value="IMP"/>
+			<xsd:enumeration value="COP"/>
+			<xsd:enumeration value="MP"/>
+			<xsd:enumeration value="IAF"/>
+			<xsd:enumeration value="ARR_RUNWAY"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="AdvisoryInformationType">
+		<xsd:sequence>
+			<xsd:element name="groundspeed" type="base:GroundspeedType" minOccurs="0"/>
+			<xsd:element name="airspeed" type="base:AirspeedType" minOccurs="0"/>
+			<xsd:element name="route" type="xsd:anyType" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>
+                    It is currently not known how this will look like, so it is anyType for now.
+                    Is there one route per sequencing point, or should this be moved into 
+                    SequencedFlightType (element sequencedFlight)?
+                </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:attributeGroup name="FlightId">
+		<xsd:annotation>
+			<xsd:documentation>
+            This group contains the former flight plan identification attributes
+            ARCID/ADEP/ADES/EOBD and the new id IFPLID
+        </xsd:documentation>
+		</xsd:annotation>
+		<xsd:attribute name="ifplid" type="fx:FlightPlanIdentifierType" use="required">
+			<xsd:annotation>
+				<xsd:documentation>IFPLID from CFMU if available "NIL" if not available</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="eobt" type="base:TimeType" use="optional">
+			<xsd:annotation>
+				<xsd:documentation>
+                As TimeType is based on xsd:datetime this combines EOBT/EOBD fields
+                This is optional for now as it cannot be provided in 1.24 release 
+                w/o change of current operational software.
+            </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="arcid" type="fx:AcidType" use="required"/>
+		<xsd:attribute name="adep" type="fx:AerodromeCodeType" use="required"/>
+		<xsd:attribute name="ades" type="fx:AerodromeCodeType" use="required"/>
+		<xsd:attribute name="amanFlightID" type="xsd:string" use="optional"/>
+	</xsd:attributeGroup>
+	<!--<xsd:group name="StrategyGroup">
+		<xsd:choice>
+			<xsd:element name="runwayClosure" type="asdd:RunwayClosureType"/>
+			<xsd:element name="runwayStrategy" type="asdd:RunwayStrategyType"/>
+			<xsd:element name="runwaySpacing" type="asdd:RunwaySpacingType"/>
+			<xsd:element name="runwayDependency" type="asdd:RunwayDependencyType"/>
+			<xsd:element name="runwaySpacingStrategy" type="asdd:RunwaySpacingStrategyType"/>
+		</xsd:choice>
+	</xsd:group>-->
+	<xsd:complexType name="RunwayClosureType">
+		<xsd:attribute name="runway" type="xsd:string"/>
+		<xsd:attribute name="start" type="base:TimeType" use="required"/>
+		<xsd:attribute name="end" type="base:TimeType" use="optional">
+			<xsd:annotation>
+				<xsd:documentation>omitted for indefinite closure</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="reason" type="xsd:string"/>
+	</xsd:complexType>
+	<xsd:complexType name="RunwayStrategyType">
+		<xsd:attribute name="strategy" type="xsd:string" use="required"/>
+		<xsd:attribute name="time" type="base:TimeType" use="required"/>
+	</xsd:complexType>
+	<xsd:complexType name="RunwaySpacingType">
+		<xsd:attribute name="runway" type="xsd:string"/>
+		<xsd:attribute name="spacing" type="xsd:double" use="required"/>
+		<xsd:attribute name="time" type="base:TimeType" use="required"/>
+	</xsd:complexType>
+	<xsd:complexType name="RunwayDependencyType">
+		<xsd:sequence>
+			<xsd:element name="runway" type="xsd:string" minOccurs="2" maxOccurs="2"/>
+		</xsd:sequence>
+		<xsd:attribute name="separation" type="xsd:double"/>
+		<xsd:attribute name="time" type="base:TimeType" use="required"/>
+	</xsd:complexType>
+	<xsd:complexType name="RunwaySpacingStrategyType">
+		<xsd:attribute name="runway" type="xsd:string" use="required"/>
+		<xsd:attribute name="spacingStrategy" type="asdd:SpacingStrategyEnum" use="required"/>
+		<xsd:attribute name="time" type="base:TimeType" use="required"/>
+	</xsd:complexType>
+	<xsd:simpleType name="SpacingStrategyEnum">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="standard"/>
+			<xsd:enumeration value="VIS2"/>
+			<xsd:enumeration value="LVP"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="ExtendedWakeCategory">
+		<xsd:union memberTypes="fx:WakeTurbulenceCategoryType">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="UPPER_MEDIUM"/>
+					<xsd:enumeration value="UNKNOWN"/>
+					<xsd:enumeration value="LIGHT"/>
+					<xsd:enumeration value="MEDIUM"/>
+					<xsd:enumeration value="HEAVY"/>
+					<xsd:enumeration value="SUPER"/>
+					<xsd:enumeration value="SMALL"/>
+					<!-- New Values -->
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:union>
+	</xsd:simpleType>
+	<xsd:simpleType name="StateEnum">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="OK"/>
+			<xsd:enumeration value="WARN"/>
+			<xsd:enumeration value="ERROR"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="StateType">
+		<xsd:attribute name="component" type="xsd:string" use="required"/>
+		<xsd:attribute name="state" type="asdd:StateEnum" use="required">
+			<xsd:annotation>
+				<xsd:documentation>
+                    Possible values: OK, WARN, ERROR         
+                </xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="description" type="xsd:string"/>
+	</xsd:complexType>
+	<xsd:element name="arrivalSequence" type="asdd:ArrivalSequence"/>
+</xsd:schema>
+

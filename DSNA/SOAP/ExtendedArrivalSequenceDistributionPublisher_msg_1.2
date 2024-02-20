@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Instanciation par la DSNA du service ED-254 ArrivalSequenceInformation pour le service ExtendedArrivalSequenceDistribution
+Définition des types de requête abonnement, désabonnement, modification de l'abonnement et problème de communication
+-->
+<!-- 
+ HISTORIQUE DES MODIFICATIONS 
+ DATE - AUTEUR - RAISONS ET MODIFICATIONS 
+ 18/11/2021 - AMO ESA - 0.1.0 - Création à partir de ArrivalSequenceInformationPublisher_msg.xsd, avec ajout des types nécessaires à l'opération de modification de l'abonnement, et modification namespace en x-arr-* au lieu de arr-*
+ 09/12/2021 - AMO ESA - 0.1.1 - Passage version namespace à 1.2
+ 03/06/2022 - AMO ESA - 0.1.2 - ajout des types nécessaires aux opérations de pause et resume des abonnements + subscriptionReference rendue obligatoire pour les opérations UnsubscriptionRequestType et ModificationRequestType
+ 23/03/2023 - CS4A - 1.2.1 - suppression de l'élément subcription, l'élément subcriptionRequest est défini dans le wsdl, passage en version 1.2.1
+  -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:dt="urn:x-dsna:swim:ed254:shared:1_1"
+           xmlns:arrsub="urn:x-dsna:swim:ed254:x-arr-sub:1_2" targetNamespace="urn:x-dsna:swim:ed254:x-arr-sub:1_2"
+           elementFormDefault="qualified" version="1.2.1">
+    <xs:import namespace="urn:x-dsna:swim:ed254:shared:1_1" schemaLocation="./SharedTypes.xsd"/>
+    <!-- ============================================= -->
+    <!-- "SubscriptionRequest Message related Types" -->
+    <!-- ============================================= -->
+    <xs:complexType name="SubscriptionRequestType">
+        <xs:sequence>
+            <xs:element name="subscriptionFilter" type="arrsub:FilterType" minOccurs="0"/>
+            <!-- No supplementary data supported for AMAN SWIM Service in DSNA context -->
+            <!-- client and subscription are identified by the X509 certificate -->
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="FilterType">
+        <xs:sequence>
+            <xs:element name="flightCriteria" type="arrsub:FlightCriteriaType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="adesCriteria" type="arrsub:AdesCriteriaType" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>Filtering on aerodromeDesignator attribute of arrivalSequence message.
+                        Not on ades field of Flight information structure.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="pointNameCriteria" type="arrsub:PointListCriteriaType" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="FlightCriteriaType" final="#all">
+        <xs:annotation>
+            <xs:documentation>Filtering for "flightID" contents.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="arcid" type="dt:IcaoArcidFilterType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="adep" type="dt:IcaoAerodromeFilterType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="ades" type="dt:IcaoAerodromeFilterType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="ifplid" type="dt:IfplidFilterType" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AdesCriteriaType">
+        <xs:annotation>
+            <xs:documentation>Filtering for AMAN aerodrome and arrival runway.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="ades" type="dt:IcaoAerodromeType" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="arrivalRunway" type="dt:ArrivalRunwayType" nillable="true" minOccurs="0"
+                        maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="PointListCriteriaType">
+        <xs:sequence>
+            <xs:element name="pointName" type="dt:IcaoPointNameFilterType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <!-- ============================== -->
+    <!-- "Subscription Response Type" -->
+    <!-- =============================== -->
+    <xs:complexType name="SubscriptionResponseType">
+        <xs:sequence>
+            <xs:element name="subscriptionResult" type="arrsub:SubscriptionStatusType" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="errorDetails" type="arrsub:ErrorDetailType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="errorReason" type="arrsub:SubscriptionErrorReasonType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="subscriptionReference" type="xs:string" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>AMQP queue URL</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="selectedAdes" type="arrsub:SelectedAdesType" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:element name="subscriptionEnd" type="dt:TimestampType" nillable="true" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>Will be equivalent to certificate expiration date</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ErrorDetailType">
+        <xs:sequence>
+            <xs:element name="erroneousFieldName" type="dt:LimCharUnlimFrom1Type" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="errorCode" type="dt:LimCharUnlimFrom1Type" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="errorMessage" type="dt:LimCharUnlimFrom1Type" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="SubscriptionErrorReasonType">
+        <xs:annotation>
+            <xs:documentation>The set of reasons why a subscription may be refused</xs:documentation>
+        </xs:annotation>
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="INVALID_FILTER">
+                        <xs:annotation>
+                            <xs:documentation>Error raised in case of a mistakes on filtering criteria.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="NO_SUCH_ELEMENT">
+                        <xs:annotation>
+                            <xs:documentation>Provider is not able to provide the requested SupplementaryData
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="ALREADY_SUBSCRIBED">
+                        <xs:annotation>
+                            <xs:documentation>The Subscriber appears to be already subscribed.</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="NOT_INTERPRETABLE">
+                        <xs:annotation>
+                            <xs:documentation>The format of the input message is not well formed (e.g. does not comply
+                                with this schema)
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <xs:simpleType name="SubscriptionStatusType">
+        <xs:annotation>
+            <xs:documentation>The possible results of a subscription request</xs:documentation>
+            <xs:appinfo/>
+        </xs:annotation>
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="SUBSCRIPTION_REFUSED"/>
+                    <xs:enumeration value="SUBSCRIPTION_SUCCESSFUL"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <xs:complexType name="SelectedAdesType">
+        <xs:sequence/>
+        <xs:attribute name="name" type="dt:IcaoAerodromeType" use="required"/>
+        <xs:attribute name="calculationPeriod" type="xs:integer" use="required">
+            <xs:annotation>
+                <xs:documentation>AMAN sequence calculation period by AMAN server (in seconds)</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    <!-- =============================================== -->
+    <!-- "UnsubscriptionRequest Message related Types" -->
+    <!-- =============================================== -->
+    <xs:complexType name="UnsubscriptionRequestType">
+        <xs:sequence>
+            <xs:element name="subscriptionReference" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <!-- ========================================= -->
+    <!-- "Unsubscription Response related Types" -->
+    <!-- ========================================= -->
+    <xs:complexType name="UnsubscriptionResponseType">
+        <xs:sequence>
+            <xs:element name="errorReason" type="arrsub:UnsubscriptionErrorReasonType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="unsubscriptionResult" type="arrsub:UnsubscriptionStatusType" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="UnsubscriptionErrorReasonType">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="NOT_SUBSCRIBED">
+                        <xs:annotation>
+                            <xs:documentation>The requestor was not previously subscribed</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="WRONG_REFERENCE">
+                        <xs:annotation>
+                            <xs:documentation>The subscriptionReference provided in the request has not been found or
+                                does not match with the subscriber identity
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="NOT_INTERPRETABLE">
+                        <xs:annotation>
+                            <xs:documentation>The format of the input message is not well formed (e.g. does not comply
+                                with this schema)
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <!-- PAT: Pertinence par rapport à l'identité du certificat ? -->
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <xs:simpleType name="UnsubscriptionStatusType">
+        <xs:annotation>
+            <xs:documentation>The possible results of an unsubscription request</xs:documentation>
+            <xs:appinfo/>
+        </xs:annotation>
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="UNSUBSCRIPTION_FAILURE"/>
+                    <xs:enumeration value="UNSUBSCRIPTION_SUCCESSFUL"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <!-- =============================================== -->
+    <!-- "PauseRequest Message related Types" -->
+    <!-- =============================================== -->
+    <xs:complexType name="PauseRequestType">
+        <xs:sequence>
+            <xs:element name="subscriptionReference" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <!-- ========================================= -->
+    <!-- "Pause Response related Types" -->
+    <!-- ========================================= -->
+    <xs:complexType name="PauseResponseType">
+        <xs:sequence>
+            <xs:element name="errorReason" type="arrsub:PauseErrorReasonType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="pauseResult" type="arrsub:PauseStatusType" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="PauseErrorReasonType">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="NOT_SUBSCRIBED">
+                        <xs:annotation>
+                            <xs:documentation>The requestor was not previously subscribed</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="WRONG_REFERENCE">
+                        <xs:annotation>
+                            <xs:documentation>The subscriptionReference provided in the request has not been found or
+                                does not match with the subscriber identity
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="NOT_INTERPRETABLE">
+                        <xs:annotation>
+                            <xs:documentation>The format of the input message is not well formed (e.g. does not comply
+                                with this schema)
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <!-- PAT: Pertinence par rapport à l'identité du certificat ? -->
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <xs:simpleType name="PauseStatusType">
+        <xs:annotation>
+            <xs:documentation>The possible results of a pause request</xs:documentation>
+            <xs:appinfo/>
+        </xs:annotation>
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="PAUSE_FAILURE"/>
+                    <xs:enumeration value="PAUSE_SUCCESSFUL"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <!-- =============================================== -->
+    <!-- "ResumeRequest Message related Types" -->
+    <!-- =============================================== -->
+    <xs:complexType name="ResumeRequestType">
+        <xs:sequence>
+            <xs:element name="subscriptionReference" type="xs:string" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <!-- ========================================= -->
+    <!-- "Resume Response related Types" -->
+    <!-- ========================================= -->
+    <xs:complexType name="ResumeResponseType">
+        <xs:sequence>
+            <xs:element name="errorReason" type="arrsub:ResumeErrorReasonType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="resumeResult" type="arrsub:ResumeStatusType" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="ResumeErrorReasonType">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="NOT_SUBSCRIBED">
+                        <xs:annotation>
+                            <xs:documentation>The requestor was not previously subscribed</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="WRONG_REFERENCE">
+                        <xs:annotation>
+                            <xs:documentation>The subscriptionReference provided in the request has not been found or
+                                does not match with the subscriber identity
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="NOT_INTERPRETABLE">
+                        <xs:annotation>
+                            <xs:documentation>The format of the input message is not well formed (e.g. does not comply
+                                with this schema)
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <!-- PAT: Pertinence par rapport à l'identité du certificat ? -->
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <xs:simpleType name="ResumeStatusType">
+        <xs:annotation>
+            <xs:documentation>The possible results of a resume request</xs:documentation>
+            <xs:appinfo/>
+        </xs:annotation>
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="RESUME_FAILURE"/>
+                    <xs:enumeration value="RESUME_SUCCESSFUL"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+    <!-- ============================================= -->
+    <!-- "ModificationRequest Message related Types" -->
+    <!-- ============================================= -->
+    <xs:complexType name="ModificationRequestType">
+        <xs:sequence>
+            <xs:element name="subscriptionReference" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="modifiedSubscriptionFilter" type="arrsub:FilterType" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+    <!-- ============================================= -->
+    <!-- "ModificationResponse Message related Types" -->
+    <!-- ============================================= -->
+    <xs:complexType name="ModificationResponseType">
+        <xs:sequence>
+            <xs:element name="subscriptionReference" type="xs:string" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>AMQP queue URL</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="subscriptionEnd" type="dt:TimestampType" nillable="true" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>Will be equivalent to certificate expiration date</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="errorReason" type="arrsub:SubscriptionErrorReasonType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="subscriptionModificationResult" type="arrsub:SubscriptionStatusType" minOccurs="1"
+                        maxOccurs="1"/>
+            <xs:element name="selectedAdes" type="arrsub:SelectedAdesType" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:element name="errorDetails" type="arrsub:ErrorDetailType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <!-- ==================================================== -->
+    <!-- "CommunicateProblem Request Message related Types" -->
+    <!-- ==================================================== -->
+    <xs:complexType name="DataValidationResultType">
+        <xs:sequence>
+            <xs:element name="dataValidationResult" type="arrsub:ValidationResultType" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="errorReport" type="arrsub:ErrorDetailType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="ValidationResultType">
+        <xs:annotation>
+            <xs:documentation>The possible exceptions communicated by the consumer when receiving a message
+            </xs:documentation>
+            <xs:appinfo/>
+        </xs:annotation>
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="SEQUENCE_GAPS">
+                        <xs:annotation>
+                            <xs:documentation>Unexpected gaps in the arrival sequence (e.g. a flight disappeared
+                                unexpectedly from the sequence). Unexpected in this case means, that the last final
+                                record flag was not set for that flight.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="WRONG_FORMAT">
+                        <xs:annotation>
+                            <xs:documentation>The format of the input message is not well formed (e.g. does not comply
+                                with this schema)
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="DATA_INVALID">
+                        <xs:annotation>
+                            <xs:documentation>This exception is raised upon reception of messages whose content is
+                                erroneous according to error conditions defined in the ED document on the data catalouge
+                                section.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="NON_SUBSCRIBED_DATA">
+                        <xs:annotation>
+                            <xs:documentation>The subscriber is reporting that he is receiving, as part of the
+                                ArrivalSequence, supplementaryData he did not request at subscription time or he is
+                                receiving ArrivalSequence messages whose content does not fulfill the filtering criteria
+                                that he set at subscription time.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="OTHER:[a-zA-Z_][a-zA-Z0-9_]*"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
+</xs:schema>
